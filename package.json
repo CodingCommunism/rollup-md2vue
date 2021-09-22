@@ -1,0 +1,31 @@
+{
+  "name": "rollup-md2vue",
+  "version": "1.0.0",
+  "description": "组件库展示，md文件转为vue文件，将其中demo分为组件渲染和代码展示两部分",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@vue/compiler-dom": "^3.0.2",
+    "highlight.js": "^10.4.1",
+    "markdown-it": "^8.4.1",
+    "markdown-it-chain": "^1.3.0",
+    "markdown-it-container": "^2.0.0",
+    "markdown-it-anchor": "^5.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CodingCommunism/rollup-md2vue.git"
+  },
+  "keywords": [
+    "rollup",
+    "plugin"
+  ],
+  "author": "liuyu666",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CodingCommunism/rollup-md2vue/issues"
+  },
+  "homepage": "https://github.com/CodingCommunism/rollup-md2vue#readme"
+}
