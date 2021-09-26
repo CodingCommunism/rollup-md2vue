@@ -1,11 +1,12 @@
-var rollup = require('rollup');
-var md = require('../src/index');
+const rollup = require('rollup');
+const md2vue = require('../build/md2vue.js');
 
-it('returns a module for the markdown file', async () => {
-  const file = rollup.rollup({
-    input: 'samples/main.js',
-    plugins: [md()]
+describe("md2vue", () => {
+  it('returns a module for the markdown file', () => {
+    const file = rollup.rollup({
+      input: '../examples/main.js',
+      plugins: [md2vue()]
+    })
   })
-  console.log('file: ', file)
-  // expect(file.filename).toEqual('test.md')
-})
+});
+

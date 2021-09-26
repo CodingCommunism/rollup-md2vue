@@ -1,4 +1,4 @@
-# rollup-md2vue
+# rollup-plugin-md2vue
 
 组件库展示，md 文件转为 vue 文件，将其中 demo 分为组件渲染和代码展示两部分
 

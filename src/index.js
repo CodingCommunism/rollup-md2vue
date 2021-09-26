@@ -1,7 +1,6 @@
-const { createFilter } = require('rollup-pluginutils');
+const { createFilter } = require('@rollup/pluginutils');
 const { stripScript, stripTemplate, genInlineComponentText } = require('./util')
 const md = require('./config')
-const fs = require('fs')
 
 const ext = /\.md$/;
 
@@ -85,11 +84,9 @@ module.exports = function md2vue (options = {}) {
   return {
     name: 'md2vue',
     transform (code, id) {
-      // const code = fs.readFileSync(path, { encoding: 'utf-8' })
       if (!ext.test(id)) return null;
       if (!filter(id)) return null;
 
-      console.log(code, 'code')
       const data = GenerateDisplayCode(code);
       return {
         code: `export default ${JSON.stringify(data.toString())};`,

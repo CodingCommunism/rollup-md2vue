@@ -1,15 +1,11 @@
-// rollup.config.js
-// import run from '@rollup/plugin-run';
-const md2vue = require('./src/index');
+
+import commonjs from '@rollup/plugin-commonjs';
 
 export default {
-  input: './examples/button.md',
+  input: 'src/index.js',
   output: {
-    file: 'dist/index.js',
-    format: 'cjs',
-    sourcemap: true
+    file: 'build/md2vue.js',
+    format: 'cjs'
   },
-  plugins: [
-    md2vue()
-  ]
+  plugins: [commonjs()]
 };
