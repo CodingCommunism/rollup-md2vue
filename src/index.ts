@@ -1,15 +1,16 @@
-const { createFilter } = require('@rollup/pluginutils');
-const { stripScript, stripTemplate, genInlineComponentText } = require('./util')
-const md = require('./config')
+import { readFileSync } from 'fs';
+import { createFilter } from '@rollup/pluginutils';
+import { stripScript, stripTemplate, genInlineComponentText } from './util';
+import md from './config';
 
 const ext = /\.md$/;
 
 /**
  * 将md->vue后文件中展示代码块，转为js组件插入到vue文件中进行展示
- * @param {String} vue
- * @returns {String} vue
+ * @param {String} mdStr
+ * @returns {String} vueInstance
  */
-function GenerateDisplayCode (source) {
+function GenerateDisplayCode (source: string) {
   console.log(source, 'source: ');
   const content = md.render(source)
 
@@ -18,9 +19,9 @@ function GenerateDisplayCode (source) {
   const endTag = ':element-demo-->'
   const endTagLen = endTag.length
 
-  let componenetsString = ''
+  let componentsString = ''
   let id = 0 // demo 的 id
-  const output = [] // 输出的内容
+  const output: string[] = [] // 输出的内容
   let start = 0 // 字符串开始位置
 
   let commentStart = content.indexOf(startTag)
@@ -36,7 +37,7 @@ function GenerateDisplayCode (source) {
 
     const demoComponentName = `element-demo${id}`
     output.push(`<template #source><${demoComponentName} /></template>`)
-    componenetsString += `${JSON.stringify(
+    componentsString += `${JSON.stringify(
       demoComponentName,
     )}: ${demoComponentContent},`
 
@@ -50,14 +51,14 @@ function GenerateDisplayCode (source) {
   // 仅允许在 demo 不存在时，才可以在 Markdown 中写 script 标签
   // todo: 优化这段逻辑
   let pageScript = ''
-  if (componenetsString) {
+  if (componentsString) {
     pageScript = `<script>
       import hljs from 'highlight.js'
       import * as Vue from "vue"
       export default {
         name: 'component-doc',
         components: {
-          ${componenetsString}
+          ${componentsString}
         }
       }
     </script>`
@@ -79,20 +80,29 @@ function GenerateDisplayCode (source) {
 }
 
 
-module.exports = function md2vue (options = {}) {
-  const filter = createFilter(options.include || ['**/*.md'], options.exclude);
+export default function md2vue (options: {
+  include?: string[];
+  exclude?: string[];
+}) {
+  const filter = createFilter(options?.include ?? ['**/*.md'], options?.exclude ?? []);
   return {
     name: 'md2vue',
-    transform (code, id) {
+    // todo: 应该是 load 而不是 transform，因为还需要 vue-plugin 对文件进行 transform
+    load (id: string): {
+      code: string;
+      map: { mappings: ''; };
+    } {
+      console.log(id);
+      
       if (!ext.test(id)) return null;
       if (!filter(id)) return null;
 
+      const code = readFileSync(id.split('?')[0], 'utf-8')
       const data = GenerateDisplayCode(code);
       return {
         code: `export default ${JSON.stringify(data.toString())};`,
         map: { mappings: '' }
       };
-    }
-
+    },
   }
 }

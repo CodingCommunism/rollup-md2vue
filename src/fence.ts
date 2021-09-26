@@ -1,5 +1,7 @@
+import MarkdownIt from "markdown-it/lib"
+
 // 覆盖默认的 fence 渲染策略
-module.exports = (md) => {
+export default (md: MarkdownIt) => {
   const defaultRender = md.renderer.rules.fence
   md.renderer.rules.fence = (tokens, idx, options, env, self) => {
     const token = tokens[idx]

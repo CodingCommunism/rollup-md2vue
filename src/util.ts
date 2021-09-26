@@ -1,20 +1,20 @@
+import { compile } from '@vue/compiler-dom'; // 模板
 // const { compileTemplate } = require('@vue/component-compiler-utils');
-const compiler = require('@vue/compiler-dom') // 模板
 // const compiler = require('@vue/compiler-sfc') // 模板
 
 
-function stripScript (content) {
+function stripScript (content: string) {
   const result = content.match(/<(script)>([\s\S]+)<\/\1>/)
   return result && result[2] ? result[2].trim() : ''
 }
 
-function stripStyle (content) {
+function stripStyle (content: string) {
   const result = content.match(/<(style)\s*>([\s\S]+)<\/\1>/)
   return result && result[2] ? result[2].trim() : ''
 }
 
 // 编写例子时不一定有 template。所以采取的方案是剔除其他的内容
-function stripTemplate (content) {
+function stripTemplate (content: string) {
   content = content.trim()
   if (!content) {
     return content
@@ -32,7 +32,7 @@ function stripTemplate (content) {
 //     .join('\n')
 // }
 
-function genInlineComponentText (template, script) {
+function genInlineComponentText (template: string, script: string) {
   // const finalOptions = {
   //   source: `<div>${template}</div>`,
   //   filename: 'inline-component', // TODO：这里有待调整
@@ -40,7 +40,7 @@ function genInlineComponentText (template, script) {
   // };
 
   // const compiled = compiler.compile(template, { mode: "module"})
-  const compiled = compiler.compile(template, { prefixIdentifiers: true })
+  const compiled = compile(template, { prefixIdentifiers: true })
   // const compiled = compileTemplate(finalOptions);
 
   // errors
@@ -65,11 +65,11 @@ function genInlineComponentText (template, script) {
   if (script) {
     script = script
       .replace(/export\s+default/, 'const democomponentExport =')
-      .replace(/import ([,{}\w\s]+) from (['"\w]+)/g, function (s0, s1, s2) {
+      .replace(/import ([,{}\w\s]+) from (['"\w]+)/g, function (_, s1: string, s2: string) {
         if (s2 === `'vue'`) {
           return `
-        const ${s1} = Vue
-        `
+            const ${s1} = Vue
+          `
         } else if (s2 === `'element3'`) {
           return `
             const ${s1} = Element3
@@ -96,7 +96,7 @@ function genInlineComponentText (template, script) {
   return demoComponentContent
 }
 
-module.exports = {
+export {
   stripScript,
   stripStyle,
   stripTemplate,
