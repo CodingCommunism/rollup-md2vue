@@ -1,6 +1,7 @@
 const { createFilter } = require('rollup-pluginutils');
 const { stripScript, stripTemplate, genInlineComponentText } = require('./util')
 const md = require('./config')
+const fs = require('fs')
 
 const ext = /\.md$/;
 
@@ -10,6 +11,7 @@ const ext = /\.md$/;
  * @returns {String} vue
  */
 function GenerateDisplayCode (source) {
+  console.log(source, 'source: ');
   const content = md.render(source)
 
   const startTag = '<!--element-demo:'
@@ -83,13 +85,14 @@ module.exports = function md2vue (options = {}) {
   return {
     name: 'md2vue',
     transform (code, id) {
+      // const code = fs.readFileSync(path, { encoding: 'utf-8' })
       if (!ext.test(id)) return null;
       if (!filter(id)) return null;
 
-
+      console.log(code, 'code')
       const data = GenerateDisplayCode(code);
       return {
-        code: `export default ${data};`,
+        code: `export default ${JSON.stringify(data.toString())};`,
         map: { mappings: '' }
       };
     }

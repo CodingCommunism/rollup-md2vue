@@ -1,6 +1,7 @@
 // const { compileTemplate } = require('@vue/component-compiler-utils');
-// const compiler = require('vue-template-compiler');
 const compiler = require('@vue/compiler-dom') // 模板
+// const compiler = require('@vue/compiler-sfc') // 模板
+
 
 function stripScript (content) {
   const result = content.match(/<(script)>([\s\S]+)<\/\1>/)

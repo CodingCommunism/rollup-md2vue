@@ -1,4 +1,5 @@
 // 把md中的demo部分取出来 分成两份，一份代码高亮展示，一份渲染
+
 const mdContainer = require('markdown-it-container')
 
 module.exports = (md) => {
@@ -23,4 +24,5 @@ module.exports = (md) => {
 
   md.use(mdContainer, 'tip')
   md.use(mdContainer, 'warning')
+  return md
 }
