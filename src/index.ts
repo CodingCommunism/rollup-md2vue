@@ -5,13 +5,15 @@ import md from './config';
 
 const ext = /\.md$/;
 
+const vueComponentCache = new Map<string, string>();
+
 /**
  * 将md->vue后文件中展示代码块，转为js组件插入到vue文件中进行展示
  * @param {String} mdStr
  * @returns {String} vueInstance
  */
-function GenerateDisplayCode (source: string) {
-  console.log(source, 'source: ');
+function GenerateDisplayCode (resolvedId: string, source: string) {
+  // console.log(source, 'source: ');
   const content = md.render(source)
 
   const startTag = '<!--element-demo:'
@@ -32,8 +34,10 @@ function GenerateDisplayCode (source: string) {
     const commentContent = content.slice(commentStart + startTagLen, commentEnd)
     const html = stripTemplate(commentContent)
     const script = stripScript(commentContent)
+    const demoResolvedId = `@md2vue${resolvedId}/md-component-demo-${id}.vue`;
+    vueComponentCache.set(demoResolvedId, commentContent);
 
-    const demoComponentContent = genInlineComponentText(html, script)
+    const demoComponentContent = `import('${demoResolvedId}')`;//genInlineComponentText(html, script)
 
     const demoComponentName = `element-demo${id}`
     output.push(`<template #source><${demoComponentName} /></template>`)
@@ -69,14 +73,18 @@ function GenerateDisplayCode (source: string) {
   }
 
   output.push(content.slice(start))
-  return `
+
+  const mdResolvedId = `@md2vue${resolvedId}/markdown-main-component.vue`;
+  const mdMainComponent = `
     <template>
       <section class="content element-doc">
         ${output.join('')}
       </section>
     </template>
     ${pageScript}
-  `
+  `;
+  vueComponentCache.set(mdResolvedId, mdMainComponent);
+  return mdResolvedId;
 }
 
 
@@ -84,23 +92,48 @@ export default function md2vue (options: {
   include?: string[];
   exclude?: string[];
 }) {
+  const cacheComponentRegEx = /(\/md\-component\-demo\-\d+\.vue|\/markdown\-main\-component\.vue)$/;
   const filter = createFilter(options?.include ?? ['**/*.md'], options?.exclude ?? []);
   return {
     name: 'md2vue',
-    // todo: 应该是 load 而不是 transform，因为还需要 vue-plugin 对文件进行 transform
-    load (id: string): {
+    resolveId(id: string) {
+      const [path, query] = id.split('?');
+      if (!query && vueComponentCache.get(path)) {
+        console.log(id, '>>>>>>> resolve id');
+        return id + '?md2vueLoad';
+      }
+      return null;
+    },
+    load(id: string) {
+      if (id.endsWith('?md2vueLoad')) {
+        console.log(id, '>>>>>>> load');
+        id = id.split('?')[0]
+        if(vueComponentCache.get(id)) {
+          console.log('get it');
+          return {
+            code: vueComponentCache.get(id),
+            map: { mappings: '' }
+          };
+        }
+      }
+      return null;
+    },
+    transform (code: string, id: string): {
       code: string;
       map: { mappings: ''; };
     } {
-      console.log(id);
       
       if (!ext.test(id)) return null;
       if (!filter(id)) return null;
 
-      const code = readFileSync(id.split('?')[0], 'utf-8')
-      const data = GenerateDisplayCode(code);
+      console.log(id, id.split('?')[0], '<<<<<<<');
+      // const code = readFileSync(id.split('?')[0], 'utf-8')
+      const mdResolvedId = GenerateDisplayCode(id, code);
       return {
-        code: `export default ${JSON.stringify(data.toString())};`,
+        code: `
+          import component from '${mdResolvedId}';
+          export default component;
+        `,
         map: { mappings: '' }
       };
     },

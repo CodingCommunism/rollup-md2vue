@@ -7,6 +7,7 @@
   "typings": "dist/types/index.d.ts",
   "scripts": {
     "test": "jest",
+    "dev": "rollup -c -w & tsc --emitDeclarationOnly --watch",
     "build": "rimraf dist && rollup -c && tsc --emitDeclarationOnly --project tsconfig.json",
     "prepublish": "yarn build"
   },
