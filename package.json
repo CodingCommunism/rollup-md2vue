@@ -1,7 +1,7 @@
 {
-  "name": "rollup-plugin-md2vue",
+  "name": "@commi/rollup-plugin-md2vue",
   "version": "1.0.0",
-  "description": "Roll markdown to Vue 3 component with Rollup, extract 'demo' and convert it into execution effect and code display",
+  "description": "Roll markdown to Vue 3 component with Rollup, extract 'demo' and convert it into execution effect and code display.",
   "main": "dist/umd/index.js",
   "module": "dist/esm/index.js",
   "typings": "dist/types/index.d.ts",
