@@ -20,7 +20,7 @@ export default (md: MarkdownIt) => {
           tokens[idx + 1].type === 'fence' ? tokens[idx + 1].content : ''
         return `<demo-block>
         ${description ? `<div>${md.render(description)}</div>` : ''}
-        <!--element-demo: ${content}:element-demo-->
+        <!--docs-demo: ${content}:docs-demo-->
         `
       }
       return '</demo-block>'

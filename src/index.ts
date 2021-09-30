@@ -1,49 +1,49 @@
-import { readFileSync } from 'fs';
 import { createFilter } from '@rollup/pluginutils';
-import { stripScript, stripTemplate, genInlineComponentText } from './util';
-import md from './config';
+import md from './utils/init-md';
+import DemoBlockStr from './templates/demo-block.vue';
 
 const ext = /\.md$/;
 
 const vueComponentCache = new Map<string, string>();
+const innerDemoBlockPath = '@md2vue/demo-block.vue';
 
 /**
  * 将md->vue后文件中展示代码块，转为js组件插入到vue文件中进行展示
  * @param {String} mdStr
  * @returns {String} vueInstance
  */
-function GenerateDisplayCode (resolvedId: string, source: string) {
-  // console.log(source, 'source: ');
+function GenerateDisplayCode (resolvedId: string, demoBlockPath: string, source: string) {
+
   const content = md.render(source)
 
-  const startTag = '<!--element-demo:'
+  const startTag = '<!--docs-demo:'
   const startTagLen = startTag.length
-  const endTag = ':element-demo-->'
+  const endTag = ':docs-demo-->'
   const endTagLen = endTag.length
 
-  let componentsString = ''
+  let componentsString = 'DemoBlock,'
   let id = 0 // demo 的 id
   const output: string[] = [] // 输出的内容
+  const importer: string[] = [
+    `import DemoBlock from '${demoBlockPath}';`
+  ];
   let start = 0 // 字符串开始位置
 
   let commentStart = content.indexOf(startTag)
   let commentEnd = content.indexOf(endTag, commentStart + startTagLen)
   while (commentStart !== -1 && commentEnd !== -1) {
     output.push(content.slice(start, commentStart))
+    const commentContent: string = content.slice(commentStart + startTagLen, commentEnd)
 
-    const commentContent = content.slice(commentStart + startTagLen, commentEnd)
-    const html = stripTemplate(commentContent)
-    const script = stripScript(commentContent)
-    const demoResolvedId = `@md2vue${resolvedId}/md-component-demo-${id}.vue`;
+    const demoResolvedId = `@md2vue${resolvedId}/md-component-demo-${id}.vue?mt=${new Date().getTime()}`;
     vueComponentCache.set(demoResolvedId, commentContent);
 
-    const demoComponentContent = `import('${demoResolvedId}')`;//genInlineComponentText(html, script)
+    const demoComponentName = `doc-demo${id}`
+    const demoComponentImporter = `import DocDemo${id} from '${demoResolvedId}';`;
 
-    const demoComponentName = `element-demo${id}`
+    importer.push(demoComponentImporter);
     output.push(`<template #source><${demoComponentName} /></template>`)
-    componentsString += `${JSON.stringify(
-      demoComponentName,
-    )}: ${demoComponentContent},`
+    componentsString += `DocDemo${id},`
 
     // 重新计算下一次的位置
     id++
@@ -57,8 +57,8 @@ function GenerateDisplayCode (resolvedId: string, source: string) {
   let pageScript = ''
   if (componentsString) {
     pageScript = `<script>
-      import hljs from 'highlight.js'
-      import * as Vue from "vue"
+      ${importer.join('\n')}
+
       export default {
         name: 'component-doc',
         components: {
@@ -74,15 +74,14 @@ function GenerateDisplayCode (resolvedId: string, source: string) {
 
   output.push(content.slice(start))
 
-  const mdResolvedId = `@md2vue${resolvedId}/markdown-main-component.vue`;
+  const mdResolvedId = `@md2vue${resolvedId}/markdown-main-component.vue?mt=${new Date().getTime()}`;
   const mdMainComponent = `
     <template>
-      <section class="content element-doc">
-        ${output.join('')}
-      </section>
+      ${output.join('')}
     </template>
     ${pageScript}
   `;
+
   vueComponentCache.set(mdResolvedId, mdMainComponent);
   return mdResolvedId;
 }
@@ -91,30 +90,31 @@ function GenerateDisplayCode (resolvedId: string, source: string) {
 export default function md2vue (options: {
   include?: string[];
   exclude?: string[];
+  blockComponent?: string;
 }) {
-  const cacheComponentRegEx = /(\/md\-component\-demo\-\d+\.vue|\/markdown\-main\-component\.vue)$/;
   const filter = createFilter(options?.include ?? ['**/*.md'], options?.exclude ?? []);
+
+  let demoBlockPath: string = innerDemoBlockPath;
+  if (options?.blockComponent) {
+    demoBlockPath = options?.blockComponent;
+  } else {
+    vueComponentCache.set(demoBlockPath, DemoBlockStr);
+  }
+
   return {
     name: 'md2vue',
     resolveId(id: string) {
-      const [path, query] = id.split('?');
-      if (!query && vueComponentCache.get(path)) {
-        console.log(id, '>>>>>>> resolve id');
-        return id + '?md2vueLoad';
+      if (vueComponentCache.get(id)) {
+        return id
       }
       return null;
     },
     load(id: string) {
-      if (id.endsWith('?md2vueLoad')) {
-        console.log(id, '>>>>>>> load');
-        id = id.split('?')[0]
-        if(vueComponentCache.get(id)) {
-          console.log('get it');
-          return {
-            code: vueComponentCache.get(id),
-            map: { mappings: '' }
-          };
-        }
+      if(vueComponentCache.get(id)) {
+        return {
+          code: vueComponentCache.get(id),
+          map: { mappings: '' }
+        };
       }
       return null;
     },
@@ -126,9 +126,7 @@ export default function md2vue (options: {
       if (!ext.test(id)) return null;
       if (!filter(id)) return null;
 
-      console.log(id, id.split('?')[0], '<<<<<<<');
-      // const code = readFileSync(id.split('?')[0], 'utf-8')
-      const mdResolvedId = GenerateDisplayCode(id, code);
+      const mdResolvedId = GenerateDisplayCode(id, demoBlockPath, code);
       return {
         code: `
           import component from '${mdResolvedId}';
